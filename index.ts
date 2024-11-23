@@ -2,7 +2,7 @@ import { resolveSync } from "bun";
 import { Elysia } from "elysia"
 import { filterGlobalHook } from "elysia/utils";
 import mongoose, { trusted } from "mongoose"
-import { forEachChild } from "typescript";
+import { forEachChild, isBreakOrContinueStatement } from "typescript";
 
 await mongoose.connect("mongodb+srv://Arvid:mongodb_test@cluster0.nnblr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
 
@@ -104,6 +104,29 @@ new Elysia()
 
         let notWorking = await employee.find(filter)
         return notWorking;
+    })
+    .put("/employees", async ({ query, body, set }) => {
+        if(!query.name){
+            set.status = 400;
+            return;
+        }
+        let filter = {name: query.name};
+        try {
+            console.log(filter);
+            let out = await employee.findOneAndUpdate(filter, body, {new: true});
+            return out;
+        } catch (error) {
+            set.status = 400;
+            return error;
+        }
+    })
+    .delete("/employees", async ({ query, set }) => {
+        try {
+            await employee.deleteOne(query);
+        } catch (error) {
+            set.status = 400;
+            return error;
+        }
     })
 
     .post("/roducts", async ({ body, set }) => {
